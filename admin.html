@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="UTF-8"/>
+    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+    <h1>Admin</h1>
+    <div id="form-container">
+        <textarea id="quote-field" placeholder="Enter Quote Here..."></textarea>
+        <textarea id="author-field" placeholder="Enter Author Here..."></textarea>
+    </div>
+    <button onclick="PostQuote()">Post Quote</button>
+    <div id="quotes-container">
+        
+    </div>
+    <a href="./landing.html"><button class="btn">Landing</button></a>
+    
+    <script>
+        function LoadQuotes() {
+            // Remove old quotes
+            const cont = document.getElementById("quotes-container");
+            while (cont.lastElementChild) {
+                cont.removeChild(cont.lastElementChild);
+            }
+            
+            // Get Request
+            const http = new XMLHttpRequest();
+            const url = 'https://www.markkeeble.com/quiz/quotes';
+            http.open("GET", url, true);
+    
+            // Event Handler to Handle Response
+            http.onreadystatechange = function() {
+                if (http.readyState == 4 && http.status == 200) {
+                    if (typeof http.responseText == "string") {
+                        if (http.responseText.charAt(0) == "F")
+                            LoadQuotes();
+                        else {
+                            let data = JSON.parse(http.responseText);
+                    
+                            ParseResponse(data);
+                        }
+                    }
+                }
+            }
+            http.send();
+        }
+        LoadQuotes();
+        
+        function PostQuote() {
+            const quote = document.getElementById("quote-field").value;
+            const author = document.getElementById("author-field").value;
+            const params = "?quote=" + quote + "&author=" + author;
+            console.log(params);
+            
+            // Post Request
+            const http = new XMLHttpRequest();
+            const url = 'https://www.markkeeble.com/quiz/quotes' + params;
+            http.open("POST", url, true);
+
+            // Event Handler to Handle Response
+            http.onreadystatechange = function() {
+                if (http.readyState == 4 && http.status == 200) {
+                    if (typeof http.responseText == "string") {
+                        if (http.responseText.charAt(0) == "F")
+                            PostQuote();
+                        else {
+                            console.log(http.responseText);
+                            
+                            LoadQuotes();
+                        }
+                    }
+                }
+            }
+            http.send();
+        }
+        
+        function ParseResponse(res) {
+            for(var i = 0; i < res.length; i++) {
+                var obj = res[i];
+            
+                CreateQuote(obj);
+            }
+        }
+        
+        function CreateQuote(obj) {
+            let quote = obj.text;
+            let author = obj.name;
+            let qID = obj.quoteID;
+            let aID = obj.authorID;
+            
+            AddQuoteToDOM(quote, author, qID, aID);
+        }
+        
+        function AddQuoteToDOM(quote, author, qID, aID) {
+            let container = document.getElementById("quotes-container");
+            
+            let div = document.createElement("div");
+            
+            let quoteTextarea = document.createElement("textarea");
+            quoteTextarea.value = quote;
+            quoteTextarea.setAttribute("id", "quote-field-" + qID + "-" + aID);
+            
+            let authorTextarea = document.createElement("textarea");
+            authorTextarea.value = author;
+            authorTextarea.setAttribute("id", "author-field-" + qID + "-" + aID);
+            
+            let updateBtn = document.createElement("button");
+            updateBtn.setAttribute("class", qID);
+            let updateT = document.createTextNode("Update");
+            updateBtn.appendChild(updateT);
+            
+            updateBtn.onclick = function() {
+                const quoteU = document.getElementById("quote-field-" + qID + "-" + aID).value;
+                const authorU = document.getElementById("author-field-" + qID + "-" + aID).value;
+                const params = "?quote=" + quoteU + "&author=" + authorU;
+                console.log(params);
+                
+                // Update Request
+                const http = new XMLHttpRequest();
+                const url = 'https://www.markkeeble.com/quiz/quotes/update' + params;
+                http.open("POST", url, true);
+        
+                // Event Handler to Handle Response
+                http.onreadystatechange = function() {
+                    if (http.readyState == 4 && http.status == 200) {
+                        console.log(http.responseText);
+                        if (http.responseText.charAt(0) == "C") {
+                             div.remove();   
+                        } else {
+                            RePostUpdate(qID, aID, div);
+                        }
+                    }
+                }
+                http.send();
+            };
+            
+            let deleteBtn = document.createElement("button");
+            deleteBtn.setAttribute("class", qID);
+            let deleteT = document.createTextNode("Delete");
+            deleteBtn.appendChild(deleteT);
+            
+            deleteBtn.onclick = function() {
+                const quoteU = document.getElementById("quote-field-" + qID + "-" + aID).value;
+                const authorU = document.getElementById("author-field-" + qID+ "-" + aID).value;
+                const params = "?quote=" + quoteU + "&author=" + authorU;
+                console.log(params);
+                
+                // DELETE Request
+                const http = new XMLHttpRequest();
+                const url = 'https://www.markkeeble.com/quiz/quotes/delete' + params;
+                http.open("POST", url, true);
+        
+                // Event Handler to Handle Response
+                http.onreadystatechange = function() {
+                    if (http.readyState == 4 && http.status == 200) {
+                        console.log(http.responseText);
+                        if (http.responseText.charAt(0) == "C") {
+                             div.remove();   
+                        } else {
+                            RePostDelete(qID, aID, div);
+                        }
+                    }
+                }
+                http.send();
+            }
+            
+            div.appendChild(quoteTextarea);
+            div.appendChild(authorTextarea);
+            div.appendChild(updateBtn);
+            div.appendChild(deleteBtn);
+            
+            container.appendChild(div);
+        }
+        
+        function RePostDelete(qID, aID, div) {
+            const quoteU = document.getElementById("quote-field-" + qID + "-" + aID).value;
+            const authorU = document.getElementById("author-field-" + qID+ "-" + aID).value;
+            const params = "?quote=" + quoteU + "&author=" + authorU;
+            console.log(params);
+                
+            // DELETE Request
+            const http = new XMLHttpRequest();
+            const url = 'https://www.markkeeble.com/quiz/quotes/delete';
+            http.open("POST", url, true);
+    
+            // Event Handler to Handle Response
+            http.onreadystatechange = function() {
+                if (http.readyState == 4 && http.status == 200) {
+                    console.log(http.responseText);
+                    if (http.responseText.charAt(0) == "C") {
+                         div.remove();   
+                    } else {
+                        RePostDelete(qID);
+                    }
+                }
+            }
+            http.send(params);
+        }
+        
+        function RePostUpdate(qID, aID, div) {
+            const quoteU = document.getElementById("quote-field-" + qID + "-" + aID).value;
+            const authorU = document.getElementById("author-field-" + qID + "-" + aID).value;
+            const params = "?quote=" + quoteU + "&author=" + authorU;
+            console.log(params);
+            
+            // Post Request
+            const http = new XMLHttpRequest();
+            const url = 'https://www.markkeeble.com/quiz/quotes/update' + params;
+            http.open("POST", url, true);
+    
+            // Event Handler to Handle Response
+            http.onreadystatechange = function() {
+                if (http.readyState == 4 && http.status == 200) {
+                    console.log(http.responseText);
+                    if (http.responseText.charAt(0) == "C") {
+                         div.remove();   
+                    } else {
+                        RePostUpdate(qID, aID, div);
+                    }
+                }
+            }
+            http.send();
+        }
+        
+    </script>
+</body>
+</html>
