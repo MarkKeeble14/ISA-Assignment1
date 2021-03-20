@@ -80,49 +80,26 @@ var server = http.createServer(function (req, res) {
                     res.end("Failed to Connect to DB: " + err);
                     throw err;
                 } else {
-                    let checkForAuthor = "SELECT * FROM authors WHERE name='" + author + "';"
                     let insertAuthor = "INSERT INTO authors (name) VALUES ('" + author + "');";
                     let insertQuote = "INSERT INTO quotes (text, authorID) VALUES ('" + quote + "', ( SELECT authorID FROM authors WHERE name='" + author + "'));";
                     return new Promise((resolve, reject) => {
-                        db.query(checkForAuthor, function (err, results) {
+                        db.query(insertAuthor, function (err, result) {
                             if (err) {
                                 res.end("Connected to DB / Failed to Fetch Rows - A\n" + err);
                                 throw err;
                             } else {
-                                resolve(results);
+                                resolve(result);
                             }
                         });
                     }).then((value) => {
-                        if (!value) {
-                            return new Promise((resolve, reject) => {
-                                db.query(insertAuthor, function (err, result) {
-                                    if (err) {
-                                        res.end("Connected to DB / Failed to Fetch Rows - A\n" + err);
-                                        throw err;
-                                    } else {
-                                        resolve(result);
-                                    }
-                                });
-                            }).then((value) => {
-                                db.query(insertQuote, function (err, result) {
-                                    if (err) {
-                                        res.end("Connected to DB / Failed to Fetch Rows - Q\n" + err);
-                                        throw err;
-                                    } else {
-                                        res.end("Connected to DB / Inserted Quote Correctly\n" + quote + ", " + author + "\n" + result);
-                                    }
-                                });
-                            });
-                        } else {
-                            db.query(insertQuote, function (err, result) {
-                                if (err) {
-                                    res.end("Connected to DB / Failed to Fetch Rows - Q\n" + err);
-                                    throw err;
-                                } else {
-                                    res.end("Connected to DB / Inserted Quote Correctly\n" + quote + ", " + author + "\n" + result);
-                                }
-                            });
-                        }
+                        db.query(insertQuote, function (err, result) {
+                            if (err) {
+                                res.end("Connected to DB / Failed to Fetch Rows - Q\n" + err);
+                                throw err;
+                            } else {
+                                res.end("Connected to DB / Inserted Quote Correctly\n" + quote + ", " + author + "\n" + result);
+                            }
+                        });
                     });
                 }
             });
